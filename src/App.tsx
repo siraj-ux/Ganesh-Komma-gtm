@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import OtoPage from "./pages/OtoPage";
 import ThankYouPage from "./pages/ThankuFree";
 import GaPage from "./pages/GaPage";
+import TyPage from "./pages/TyPage";
 
 const queryClient = new QueryClient();
 
@@ -19,9 +20,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/oto" element={<OtoPage/>}/>
-          <Route path="/ty" element={<ThankYouPage/>}/>
-          <Route path="/ga" element={<GaPage/>}/>
+          <Route path="/oto" element={<OtoPage />} />
+          <Route path="/ty" element={<TyPage />} />
+          <Route path="/ga" element={<GaPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
