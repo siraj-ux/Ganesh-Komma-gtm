@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-const TyPage = () => {
+const OtoTyPage = () => {
   /* ---------------- TRACKING ---------------- */
   useEffect(() => {
     // This triggers the Google Ads Conversion Event provided by the client
@@ -237,4 +237,4 @@ const TyPage = () => {
   );
 };
 
-export default TyPage;
+export default OtoTyPage;
