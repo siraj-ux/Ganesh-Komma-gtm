@@ -7,11 +7,12 @@ import {
   FileCheck,
   MessageCircle,
   BookOpen,
-  Loader2, // Added for loading icon
+  Loader2, // Added for loading state
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { useFacebookPixel } from "@/hooks/usePIxelWatch";
 
 // Webhook Configuration
 const PROGRAM_CODE = "A1EngFB-WO_OTO_TY";
@@ -22,32 +23,48 @@ const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?progra
 declare global {
   interface Window {
     gtag: any;
+    fbq: any;
   }
 }
 
-const OtoTyPage = () => {
+const OtoTyPageFb = () => {
+  useFacebookPixel();
+  
   /* ---------------- STATE ---------------- */
   const [waLink, setWaLink] = useState<string>("");
   const [isLoadingLink, setIsLoadingLink] = useState(true);
 
-  /* ---------------- TRACKING & FETCH ---------------- */
+  /* ---------------- TRACKING & FETCHING ---------------- */
   useEffect(() => {
-    // 1. Google Ads Tracking
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag('event', 'conversion', {
-        'send_to': 'AW-362859026/xNW0CK_00v4bEJKUg60B',
-        'transaction_id': ''
-      });
+    if (typeof window !== "undefined") {
+      // 1. Google Ads Conversion
+      if (window.gtag) {
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-362859026/xNW0CK_00v4bEJKUg60B',
+          'transaction_id': ''
+        });
+      }
+
+      // 2. Facebook Pixel Events
+      if (window.fbq) {
+        window.fbq('track', 'PageView');
+        window.fbq('track', 'Purchase', {
+          value: 99.00,
+          currency: 'INR',
+          content_name: 'AI Stock & IPO Prompt Codex',
+          content_category: 'OTO'
+        });
+      }
     }
 
-    // 2. Fetch WhatsApp Link from Webhook
+    // 3. Fetch Dynamic WhatsApp Link
     let ignore = false;
     async function fetchWaLink() {
       try {
         const res = await fetch(WEBINAR_SYNC_URL);
         const json = await res.json();
         
-        // Extracting wAGroupJoiningLink from the data object
+        // Extract link from json.data.wAGroupJoiningLink
         const link = json?.data?.wAGroupJoiningLink || "";
         
         if (!ignore) {
@@ -55,7 +72,7 @@ const OtoTyPage = () => {
           setIsLoadingLink(false);
         }
       } catch (error) {
-        console.error("Failed to fetch link", error);
+        console.error("Error fetching webhook link:", error);
         if (!ignore) setIsLoadingLink(false);
       }
     }
@@ -112,20 +129,22 @@ const OtoTyPage = () => {
     } else {
       toast({
         variant: "destructive",
-        title: "Link not available",
-        description: "Please wait a moment or refresh the page."
+        title: "Wait a moment",
+        description: "WhatsApp link is still loading. Please try again in a second."
       });
     }
   };
 
   return (
     <div className="ty-theme min-h-screen bg-gradient-to-b from-background to-secondary overflow-hidden">
+      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
+        {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -158,7 +177,7 @@ const OtoTyPage = () => {
           </div>
         </motion.div>
 
-        {/* WhatsApp VIP Group Section - Updated with dynamic link */}
+        {/* Dynamic WhatsApp VIP Group Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,7 +200,7 @@ const OtoTyPage = () => {
                 {isLoadingLink ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Connecting...
+                    Connecting to Group...
                   </>
                 ) : (
                   "Join VIP WhatsApp Group"
@@ -208,29 +227,32 @@ const OtoTyPage = () => {
                 transition={{ delay: 1.4 + index * 0.1, duration: 0.5 }}
                 whileHover={{ y: -8 }}
               >
-                <Card className="relative p-8 flex flex-col items-center text-center h-full bg-card border-border hover:border-primary/50 transition-all duration-300">
-                  <div className="mb-6 p-4 bg-background/50 rounded-xl">
-                    <Icon className="w-10 h-10 text-primary" />
+                <Card className="relative overflow-hidden bg-card border-border hover:border-primary/50 transition-all duration-300 h-full group">
+                  <div className="relative p-8 flex flex-col items-center text-center h-full">
+                    <div className="mb-6 p-4 bg-background/50 rounded-xl">
+                      <Icon className="w-10 h-10 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors leading-tight">
+                      {resource.title}
+                    </h3>
+                    <p className="text-muted-foreground mb-8 flex-grow text-sm leading-relaxed max-w-sm">
+                      {resource.description}
+                    </p>
+                    <Button
+                      onClick={() => handleDownload(resource.title, resource.link)}
+                      className="w-full md:w-auto px-10 py-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-xl shadow-lg transition-all"
+                    >
+                      <Download className="w-5 h-5 mr-2" />
+                      Download Now
+                    </Button>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors leading-tight">
-                    {resource.title}
-                  </h3>
-                  <p className="text-muted-foreground mb-8 flex-grow text-sm leading-relaxed max-w-sm">
-                    {resource.description}
-                  </p>
-                  <Button
-                    onClick={() => handleDownload(resource.title, resource.link)}
-                    className="w-full md:w-auto px-10 py-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-xl shadow-lg transition-all"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    Download Now
-                  </Button>
                 </Card>
               </motion.div>
             );
           })}
         </motion.div>
 
+        {/* Footer CTA */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -251,4 +273,4 @@ const OtoTyPage = () => {
   );
 };
 
-export default OtoTyPage;
+export default OtoTyPageFb;

@@ -20,9 +20,9 @@ const FORM_ID = "webinar-lead-form";
 const YOUTUBE_ID = "eNUfnbzLr7M";
 
 const PABBLY_WEBHOOK_URL =
-  "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjcwNTZjMDYzNzA0MzE1MjY4NTUzNTUxMzIi_pc";
+  "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjcwNTZmMDYzNjA0MzE1MjY4NTUzNDUxMzIi_pc";
 
-const PAGE_NAME = "A1_Eng_ADX_OTO_GA";
+const PAGE_NAME = "A1_Eng_ADX_OTO_FB";
 
 // ✅ Webinar sync endpoint (for date/day/time)
 const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?programCode=${encodeURIComponent(
@@ -227,7 +227,7 @@ const HeroForm = () => {
       profession: form.profession,
       objective: form.objective,
       ...track,
-      gclid: track.gclid || "",
+      fbclid: track.fbclid || "",
       page_name,
       weburl,
     };
@@ -516,7 +516,7 @@ const HeroForm = () => {
   );
 };
 
-const HeroSection = () => {
+const HeroSectionFb = () => {
   const [play, setPlay] = useState(false);
 
   // ✅ Webinar meta fetched from sync endpoint
@@ -862,4 +862,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default HeroSectionFb;
