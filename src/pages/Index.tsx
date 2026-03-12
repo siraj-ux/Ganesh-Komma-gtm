@@ -10,6 +10,7 @@ import FAQSection from "@/components/webinar/FAQSection";
 import StickyFooter from "@/components/webinar/StickyFooter";
 
 const Index = () => {
+  
   return (
     <main className="min-h-screen overflow-x-hidden bg-background">
       <HeroSection />
