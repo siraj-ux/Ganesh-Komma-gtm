@@ -213,7 +213,7 @@ const OtoPage = () => {
             </h1>
 
             <p className="text-[#1A1F2B] text-lg">
-              You’ve taken a smart step. <br className="hidden md:block" />
+              You've taken a smart step. <br className="hidden md:block" />
               Now equip yourself to make every investing decision smarter.
             </p>
 
@@ -308,17 +308,52 @@ const OtoPage = () => {
             transition={{ duration: 0.45, delay: 0.08 }}
             className="order-4 mt-6 lg:col-start-1 lg:row-start-3"
           >
-              <div className="rounded-2xl border border-[#2E4C8C]/12 bg-white/70 p-5 space-y-5">
-                <h2 className="text-xl md:text-2xl font-extrabold text-[#2E4C8C]">What You Get</h2>
-                <div className="rounded-2xl border border-[#2E4C8C]/12 bg-white/80 p-4 space-y-3">
-                  {["Decode any IPO DRHP in minutes", "Detect financial red flags early", "Identify breakouts & trends"].map((item, idx) => (
-                    <p key={idx} className="text-sm font-bold text-[#1A1F2B] flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-[#FA2D1A] shrink-0" />
-                      {item}
+            <div className="rounded-2xl border border-[#2E4C8C]/12 bg-white/70 p-5 space-y-5">
+              <div>
+                <h2 className="text-xl md:text-2xl font-extrabold text-[#2E4C8C]">
+                  What You Get (100+ AI Prompts)
+                </h2>
+              </div>
+
+              <div className="rounded-2xl border border-[#2E4C8C]/12 bg-white/80 p-4 space-y-3">
+                {[
+                  "Decode any IPO DRHP in minutes",
+                  "Detect financial red flags early",
+                  "Identify breakouts, trends & key levels",
+                  "Enter & exit trades using structured frameworks",
+                  "Analyze concalls like a research analyst"
+                ].map((item, idx) => (
+                  <p key={idx} className="text-sm font-bold text-[#1A1F2B] flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-[#FA2D1A] shrink-0" />
+                    {item}
+                  </p>
+                ))}
+                
+                <div className="pt-2">
+                    <p className="text-sm font-extrabold text-[#2E4C8C]">
+                        No guesswork. No emotional trades. Just structured clarity.
                     </p>
-                  ))}
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-[#FA2D1A]/20 bg-[#FA2D1A]/10 p-4">
+                <p className="font-extrabold text-[#1A1F2B]">🎁 Bonuses Included — FREE</p>
+                <div className="text-sm text-[#3B3F4A] mt-2 space-y-1">
+                  <span className="block">✔ AI Research Templates (Copy–Paste Ready)</span>
+                  <span className="block">✔ Ready-to-Use Company Analysis Script</span>
+                  <span className="block">✔ Structured Market Research Framework</span>
+                </div>
+              </div>
+
+              <div className="space-y-1 border-t border-[#2E4C8C]/5 pt-4">
+                <div className="text-xs font-bold text-[#FA2D1A]">
+                    ⚠ True One-Time Offer
+                </div>
+                <div className="text-xs text-[#3B3F4A]">
+                    ⚠ Disappears Once You Leave This Page
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
