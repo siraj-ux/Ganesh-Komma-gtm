@@ -247,7 +247,7 @@ const HeroForm = () => {
       ...track,
     }).toString();
 
-    window.location.href = `/otofb?${params}`;
+    window.location.href = `/tyfb?${params}`;
   }
 
   return (

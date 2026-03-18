@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, MessageCircle, ArrowRight } from "lucide-react";
 import { useFacebookPixel } from "@/hooks/usePIxelWatch";
@@ -8,11 +8,54 @@ const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?progra
   PROGRAM_CODE
 )}`;
 
+declare global {
+  interface Window {
+    fbq: any;
+  }
+}
+
 const ThankuFreeFb = () => {
   useFacebookPixel();
+
   const [waLink, setWaLink] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // prevent duplicate firing
+  const purchaseFired = useRef(false);
+
+  /* ---------------- FACEBOOK TRACKING ---------------- */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const fireFacebookEvents = () => {
+      if (!window.fbq) {
+        console.log("FB Pixel not loaded ❌");
+        return;
+      }
+
+      // PageView
+      window.fbq("track", "PageView");
+      console.log("FB PageView fired ✅");
+
+      // Purchase (only once)
+      if (!purchaseFired.current) {
+        window.fbq("track", "Purchase", {
+          value: 9.0,
+          currency: "INR",
+        });
+
+        purchaseFired.current = true;
+        console.log("FB Purchase fired ✅");
+      }
+    };
+
+    // Delay to ensure pixel is loaded
+    const timer = setTimeout(fireFacebookEvents, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  /* ---------------- FETCH WHATSAPP LINK ---------------- */
   useEffect(() => {
     let ignore = false;
 
@@ -43,7 +86,7 @@ const ThankuFreeFb = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-[#FFF3E1] overflow-hidden">
-      {/* soft background glows */}
+      {/* Background */}
       <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#2E4C8C]/10 blur-3xl" />
       <div className="pointer-events-none absolute top-24 right-0 h-72 w-72 rounded-full bg-[#FA2D1A]/10 blur-3xl" />
 
