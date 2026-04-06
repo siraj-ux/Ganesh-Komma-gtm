@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; // Added useState
+import { useEffect, useState, useRef } from "react"; // Added useRef
 import { motion } from "framer-motion";
 import {
   Download,
@@ -7,14 +7,18 @@ import {
   FileCheck,
   MessageCircle,
   BookOpen,
-  Loader2, // Added for loading state
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useFacebookPixel } from "@/hooks/usePIxelWatch";
+// import { useFacebookPixel } from "@/hooks/usePIxelWatch";
 
-// Webhook Configuration
+// --- GTM & PRODUCT IMPORTS ---
+import { trackPurchase } from "@/utils/gtm";
+import { ORDER, PRODUCT_OTO } from "@/utils/product-info";
+// -----------------------------
+
 const PROGRAM_CODE = "A1EngFB-WO_OTO_TY";
 const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?programCode=${encodeURIComponent(
   PROGRAM_CODE
@@ -28,51 +32,71 @@ declare global {
 }
 
 const OtoTyPageFb = () => {
-  useFacebookPixel();
-  
-  /* ---------------- STATE ---------------- */
+  // useFacebookPixel();
+
+  /* ---------------- STATE & REFS ---------------- */
   const [waLink, setWaLink] = useState<string>("");
   const [isLoadingLink, setIsLoadingLink] = useState(true);
+  const purchaseFired = useRef(false); // Prevents duplicate firing in StrictMode
 
   /* ---------------- TRACKING & FETCHING ---------------- */
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // 1. Google Ads Conversion
-      if (window.gtag) {
-        window.gtag('event', 'conversion', {
-          'send_to': 'AW-362859026/xNW0CK_00v4bEJKUg60B',
-          'transaction_id': ''
-        });
-      }
+    if (typeof window === "undefined") return;
 
-      // 2. Facebook Pixel Events
-      if (window.fbq) {
-        window.fbq('track', 'PageView');
-        window.fbq('track', 'Purchase', {
-          value: 99.00,
-          currency: 'INR',
-          content_name: 'AI Stock & IPO Prompt Codex',
-          content_category: 'OTO'
-        });
-      }
+    // 1. Get Payment ID from URL for transaction tracking
+    const params = new URLSearchParams(window.location.search);
+    const paymentId = params.get("payment_id") || params.get("razorpay_payment_id") || `txn_fb_oto_${Date.now()}`;
+
+    // 2. GTM & FB PURCHASE TRACKING (Refresh Protected)
+    const trackedKey = `gtm_fb_oto_tracked_${paymentId}`;
+    if (!localStorage.getItem(trackedKey) && !purchaseFired.current) {
+
+      // A. GTM Track Purchase
+      trackPurchase({
+        ...ORDER,
+        value: 99.00,
+        transaction_id: paymentId,
+        items: [{ ...PRODUCT_OTO }],
+      });
+
+      // B. Facebook Pixel Purchase
+      // if (window.fbq) {
+      //   window.fbq('track', 'Purchase', {
+      //     value: 99.00,
+      //     currency: 'INR',
+      //     content_name: 'AI Stock & IPO Prompt Codex',
+      //     content_category: 'OTO',
+      //     transaction_id: paymentId
+      //   });
+      // }
+
+      localStorage.setItem(trackedKey, "true");
+      purchaseFired.current = true;
+      console.log("Purchase Events Fired (GTM & FB) ✅");
     }
 
-    // 3. Fetch Dynamic WhatsApp Link
+    // 3. Google Ads Conversion
+    if (window.gtag) {
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-362859026/xNW0CK_00v4bEJKUg60B',
+        'transaction_id': paymentId
+      });
+    }
+
+    // 4. Fetch Dynamic WhatsApp Link
     let ignore = false;
     async function fetchWaLink() {
       try {
         const res = await fetch(WEBINAR_SYNC_URL);
         const json = await res.json();
-        
-        // Extract link from json.data.wAGroupJoiningLink
         const link = json?.data?.wAGroupJoiningLink || "";
-        
+
         if (!ignore) {
           setWaLink(link);
           setIsLoadingLink(false);
         }
       } catch (error) {
-        console.error("Error fetching webhook link:", error);
+        console.error("Error fetching link:", error);
         if (!ignore) setIsLoadingLink(false);
       }
     }
@@ -137,14 +161,12 @@ const OtoTyPageFb = () => {
 
   return (
     <div className="ty-theme min-h-screen bg-gradient-to-b from-background to-secondary overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
-        {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -177,7 +199,7 @@ const OtoTyPageFb = () => {
           </div>
         </motion.div>
 
-        {/* Dynamic WhatsApp VIP Group Section */}
+        {/* WhatsApp VIP Group Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -191,7 +213,7 @@ const OtoTyPageFb = () => {
               </div>
               <h3 className="text-2xl font-bold mb-3">Join Our Exclusive VIP WhatsApp Group</h3>
               <p className="text-muted-foreground mb-6">Real-time market updates and direct insights from Ganesh Sir</p>
-              
+
               <Button
                 onClick={handleJoinWhatsapp}
                 disabled={isLoadingLink}
@@ -200,7 +222,7 @@ const OtoTyPageFb = () => {
                 {isLoadingLink ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Connecting to Group...
+                    Connecting...
                   </>
                 ) : (
                   "Join VIP WhatsApp Group"
@@ -252,7 +274,6 @@ const OtoTyPageFb = () => {
           })}
         </motion.div>
 
-        {/* Footer CTA */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

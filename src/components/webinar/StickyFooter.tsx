@@ -1,14 +1,8 @@
 import { motion, useScroll } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ArrowRight, Gift, Clock } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
-
-const scrollToForm = () => {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-};
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+import SubscribeButton from "@/components/SubscribeButton";
 
 const StickyFooter = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -63,14 +57,18 @@ const StickyFooter = () => {
           </div>
 
           {/* CTA */}
-          <button
-            onClick={scrollToForm}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="sticky_footer_mobile"
+            href="#webinar-lead-form"
+            className="w-full !bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
         </div>
 
         {/* ---------------- DESKTOP ---------------- */}
@@ -89,14 +87,18 @@ const StickyFooter = () => {
           </div>
 
           {/* CTA */}
-          <button
-            onClick={scrollToForm}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="sticky_footer_desktop"
+            href="#webinar-lead-form"
+            className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
 
           {/* Seats */}
           <div className="hidden lg:flex items-center gap-2 text-sm">

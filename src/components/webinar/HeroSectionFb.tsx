@@ -14,7 +14,14 @@ import {
   Mail,
   Phone,
   MapPin,
+  Loader2,
 } from "lucide-react";
+
+// GTM & Product Imports
+import AddToCartButton from '@/components/AddToCartButton';
+import { trackAddToCart } from "@/utils/gtm";
+import { PRODUCT } from "@/utils/product-info";
+import SubscribeButton from "@/components/SubscribeButton";
 
 const FORM_ID = "webinar-lead-form";
 const YOUTUBE_ID = "eNUfnbzLr7M";
@@ -53,9 +60,14 @@ const stats = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function scrollToWebinarForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const wrappers = document.querySelectorAll(".webinar-form-wrapper");
+  for (let i = 0; i < wrappers.length; i++) {
+    const w = wrappers[i];
+    if (w.getBoundingClientRect().width > 0) {
+      w.scrollIntoView({ behavior: "smooth", block: "start" });
+      break;
+    }
+  }
 }
 
 function ytThumb(id: string) {
@@ -86,6 +98,7 @@ type WebinarMeta = {
 };
 
 const HeroForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -161,7 +174,7 @@ const HeroForm = () => {
       const blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
       const ok = navigator.sendBeacon?.(PABBLY_WEBHOOK_URL, blob);
       if (ok) return;
-    } catch {}
+    } catch { }
 
     // 2) fallback fetch: x-www-form-urlencoded (no preflight)
     try {
@@ -186,6 +199,8 @@ const HeroForm = () => {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setTouched({
       name: true,
       email: true,
@@ -194,8 +209,13 @@ const HeroForm = () => {
       profession: true,
       objective: true,
     });
-    
+
     if (!isValid) return;
+
+    setIsSubmitting(true);
+
+    // Note: trackAddToCart(PRODUCT) is handled internally by AddToCartButton component 
+    // to prevent double-triggering events.
 
     const track = getTrackingFromUrl();
     const weburl = window.location.href;
@@ -216,7 +236,7 @@ const HeroForm = () => {
     try {
       localStorage.setItem("lead_data", JSON.stringify(form));
       localStorage.setItem("lead_utms", JSON.stringify(track));
-    } catch {}
+    } catch { }
 
     // ✅ Send to Pabbly
     const pabblyPayload = {
@@ -253,7 +273,7 @@ const HeroForm = () => {
   return (
     <div
       id={FORM_ID}
-      className="rounded-2xl border border-[#2E4C8C]/15 bg-white/60 shadow-xl overflow-hidden relative z-10"
+      className="webinar-form-wrapper rounded-2xl border border-[#2E4C8C]/15 bg-white/60 shadow-xl overflow-hidden relative z-10"
     >
       <div className="p-5">
         <div className="mb-4 text-center">
@@ -296,9 +316,8 @@ const HeroForm = () => {
               Full Name
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("name") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("name") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
+                }`}
             >
               <User
                 className="w-4 h-4"
@@ -327,9 +346,8 @@ const HeroForm = () => {
               Email
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("email") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("email") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
+                }`}
             >
               <Mail
                 className="w-4 h-4"
@@ -359,9 +377,8 @@ const HeroForm = () => {
               Phone Number
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("phone") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("phone") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
+                }`}
             >
               <Phone
                 className="w-4 h-4"
@@ -394,9 +411,8 @@ const HeroForm = () => {
               City
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("city") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("city") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"
+                }`}
             >
               <MapPin
                 className="w-4 h-4"
@@ -425,11 +441,10 @@ const HeroForm = () => {
               Profession
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("profession")
-                  ? "border-[#FA2D1A]/60"
-                  : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("profession")
+                ? "border-[#FA2D1A]/60"
+                : "border-[#2E4C8C]/15"
+                }`}
             >
               <select
                 value={form.profession}
@@ -463,11 +478,10 @@ const HeroForm = () => {
               Objective
             </label>
             <div
-              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${
-                showError("objective")
-                  ? "border-[#FA2D1A]/60"
-                  : "border-[#2E4C8C]/15"
-              }`}
+              className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm focus-within:shadow-md transition ${showError("objective")
+                ? "border-[#FA2D1A]/60"
+                : "border-[#2E4C8C]/15"
+                }`}
             >
               <select
                 value={form.objective}
@@ -495,14 +509,25 @@ const HeroForm = () => {
             ) : null}
           </div>
 
-          <button
+          <AddToCartButton
             type="submit"
-            className="w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+            product={PRODUCT}
+            disabled={isSubmitting}
+            className="!bg-[#FA2D1A] w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now &amp; Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              isSubmitting ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="animate-spin mr-2 h-5 w-5" /> Processing...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  Register Now & Get Access
+                  <ArrowRight className="w-5 h-5" />
+                </span>
+              )
+            }
+          />
 
           <p className="text-[11px] text-center" style={{ color: "#3B3F4A" }}>
             Receive bonuses by joining the WhatsApp group.{" "}
@@ -623,14 +648,18 @@ const HeroSectionFb = () => {
             </div>
 
             <div className="flex justify-center">
-              <button
+              <SubscribeButton
                 onClick={scrollToWebinarForm}
-                className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
+                ctaLocation="hero_mobile"
+                className="bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
                 style={{ backgroundColor: "#FA2D1A" }}
-              >
-                Register Now &amp; Get Access
-                <ArrowRight className="w-5 h-5" />
-              </button>
+                label={
+                  <span className="flex items-center gap-2">
+                    Register Now & Get Access
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                }
+              />
             </div>
 
             {/* VIDEO PREVIEW (mobile) */}
@@ -745,14 +774,19 @@ const HeroSectionFb = () => {
                 ))}
               </ul>
 
-              <button
+              <SubscribeButton
                 onClick={scrollToWebinarForm}
-                className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+                ctaLocation="hero_desktop"
+                className="bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
                 style={{ backgroundColor: "#FA2D1A" }}
-              >
-                Register Now &amp; Get Access
-                <ArrowRight className="w-5 h-5" />
-              </button>
+                label={
+                  <span className="flex items-center gap-2">
+                    Register Now & Get Access
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                }
+              />
+
 
               <p className="mt-3 text-sm" style={{ color: "#3B3F4A" }}>
                 Receive bonuses by joining the WhatsApp group.{" "}
@@ -790,9 +824,8 @@ const HeroSectionFb = () => {
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.45, delay: 0.35 + index * 0.12 }}
-                  className={`absolute z-20 hidden md:flex items-center gap-2 rounded-full px-3 py-2 border border-[#2E4C8C]/15 backdrop-blur-sm shadow-sm ${badge.chipBg} ${
-                    index === 0 ? "top-3 right-2" : "top-1/3 -left-6"
-                  }`}
+                  className={`absolute z-20 hidden md:flex items-center gap-2 rounded-full px-3 py-2 border border-[#2E4C8C]/15 backdrop-blur-sm shadow-sm ${badge.chipBg} ${index === 0 ? "top-3 right-2" : "top-1/3 -left-6"
+                    }`}
                   style={{
                     animation: "floaty 4.5s ease-in-out infinite",
                     animationDelay: `${index * 0.3}s`,

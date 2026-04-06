@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; // Added useState
+import { useEffect, useState, useRef } from "react"; // Added useRef
 import { motion } from "framer-motion";
 import {
   Download,
@@ -7,13 +7,17 @@ import {
   FileCheck,
   MessageCircle,
   BookOpen,
-  Loader2, // Added for loading icon
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 
-// Webhook Configuration
+// --- GTM & PRODUCT IMPORTS ---
+import { trackPurchase } from "@/utils/gtm";
+import { ORDER, GA_PRODUCT_OTO } from "@/utils/product-info";
+// -----------------------------
+
 const PROGRAM_CODE = "A1EngFB-WO_OTO_TY";
 const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?programCode=${encodeURIComponent(
   PROGRAM_CODE
@@ -26,30 +30,48 @@ declare global {
 }
 
 const OtoTyPage = () => {
-  /* ---------------- STATE ---------------- */
+  /* ---------------- STATE & REFS ---------------- */
   const [waLink, setWaLink] = useState<string>("");
   const [isLoadingLink, setIsLoadingLink] = useState(true);
+  const purchaseFired = useRef(false); // Prevents double firing in StrictMode
 
   /* ---------------- TRACKING & FETCH ---------------- */
   useEffect(() => {
-    // 1. Google Ads Tracking
-    if (typeof window !== "undefined" && window.gtag) {
+    if (typeof window === "undefined") return;
+
+    // 1. Get Payment ID for Tracking
+    const params = new URLSearchParams(window.location.search);
+    const paymentId = params.get("payment_id") || params.get("razorpay_payment_id") || `txn_oto_${Date.now()}`;
+
+    // 2. GTM PURCHASE TRACKING (GA_PRODUCT_OTO)
+    const trackedKey = `gtm_oto_tracked_${paymentId}`;
+    if (!localStorage.getItem(trackedKey) && !purchaseFired.current) {
+      trackPurchase({
+        ...ORDER,
+        value: 99, // OTO Price
+        transaction_id: paymentId,
+        items: [{ ...GA_PRODUCT_OTO }],
+      });
+      localStorage.setItem(trackedKey, "true");
+      purchaseFired.current = true;
+      console.log("GTM OTO Purchase Fired ✅");
+    }
+
+    // 3. Google Ads Tracking (populated with paymentId)
+    if (window.gtag) {
       window.gtag('event', 'conversion', {
         'send_to': 'AW-362859026/xNW0CK_00v4bEJKUg60B',
-        'transaction_id': ''
+        'transaction_id': paymentId
       });
     }
 
-    // 2. Fetch WhatsApp Link from Webhook
+    // 4. Fetch WhatsApp Link
     let ignore = false;
     async function fetchWaLink() {
       try {
         const res = await fetch(WEBINAR_SYNC_URL);
         const json = await res.json();
-        
-        // Extracting wAGroupJoiningLink from the data object
         const link = json?.data?.wAGroupJoiningLink || "";
-        
         if (!ignore) {
           setWaLink(link);
           setIsLoadingLink(false);
@@ -158,7 +180,7 @@ const OtoTyPage = () => {
           </div>
         </motion.div>
 
-        {/* WhatsApp VIP Group Section - Updated with dynamic link */}
+        {/* WhatsApp VIP Group Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -172,7 +194,7 @@ const OtoTyPage = () => {
               </div>
               <h3 className="text-2xl font-bold mb-3">Join Our Exclusive VIP WhatsApp Group</h3>
               <p className="text-muted-foreground mb-6">Real-time market updates and direct insights from Ganesh Sir</p>
-              
+
               <Button
                 onClick={handleJoinWhatsapp}
                 disabled={isLoadingLink}

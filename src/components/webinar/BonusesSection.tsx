@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { Gift, ArrowRight } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+// ✅ Import SubscribeButton
+import SubscribeButton from "@/components/SubscribeButton";
 
 const bonuses = [
   {
@@ -30,12 +31,6 @@ const bonuses = [
     originalPrice: "₹1999/-",
   },
 ];
-
-function scrollToForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 const BonusesSection = () => {
   return (
@@ -127,7 +122,7 @@ const BonusesSection = () => {
           ))}
         </div>
 
-        {/* CTA → FORM */}
+        {/* ✅ CTA → UPDATED TO SUBSCRIBE BUTTON */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -135,14 +130,18 @@ const BonusesSection = () => {
           transition={{ duration: 0.45 }}
           className="text-center"
         >
-          <button
-            onClick={scrollToForm}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="bonuses_section"
+            href="#webinar-lead-form"
+            className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
 
           <p className="mt-3 text-xs text-white/80">
             Receive bonuses by joining the WhatsApp group.{" "}

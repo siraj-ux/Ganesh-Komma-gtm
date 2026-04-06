@@ -8,8 +8,8 @@ import {
   ChevronRight,
   ArrowRight,
 } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+import SubscribeButton from "@/components/SubscribeButton";
 
 const videoTestimonials = [
   {
@@ -73,11 +73,6 @@ const textTestimonials = [
   },
 ];
 
-function scrollToForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 /** ✅ Extract YouTube video ID from youtu.be / watch?v= / embed links */
 function getYouTubeId(input) {
@@ -414,14 +409,18 @@ const TestimonialsSection = () => {
 
         {/* CTA → FORM */}
         <div className="text-center mt-8">
-          <button
-            onClick={scrollToForm}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="testimonials_section"
+            href="#webinar-lead-form"
+            className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
           <p className="mt-3 text-xs" style={{ color: "#3B3F4A" }}>
             Receive bonuses by joining the WhatsApp group.{" "}
             <span className="font-bold" style={{ color: "#FA2D1A" }}>

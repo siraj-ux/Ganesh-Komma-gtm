@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { TrendingDown, HelpCircle, Target, ArrowRight } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+// ✅ Import the SubscribeButton
+import SubscribeButton from "@/components/SubscribeButton";
 
 const challenges = [
   {
@@ -21,15 +22,9 @@ const challenges = [
   },
 ];
 
-function scrollToForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 const ChallengesSection = () => {
   return (
-    <section className="relative bg-[#FFFFF]">
+    <section className="relative bg-[#FFFFFF]">
       <div className="container-main py-8 md:py-10 lg:py-12">
         {/* Heading */}
         <motion.div
@@ -83,14 +78,19 @@ const ChallengesSection = () => {
             These are common hurdles, but with our Webinar, you'll have a clear path forward.
           </p>
 
-          {/* ✅ CTA → FORM */}
-          <button
-            onClick={scrollToForm}
-            className="btn-accent group"
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
+          {/* ✅ UPDATED TO SUBSCRIBE BUTTON */}
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="challenges_section"
+            href="#webinar-lead-form"
+            className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
+            style={{ backgroundColor: "#FA2D1A" }}
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
 
           <p className="mt-3 text-xs text-muted-foreground">
             Receive bonuses by joining the WhatsApp group.{" "}

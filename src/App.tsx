@@ -14,9 +14,17 @@ import TyPage from "./pages/TyPage";
 import OtoTyPage from "./pages/OtoTyPage";
 import OtoTyPageFb from "./pages/OtoTyPageFb";
 import IndexFb from "./pages/IndexFb";
+import { usePageViewGTM } from "./hooks/use-pageview-gtm";
 
 
 const queryClient = new QueryClient();
+
+// Helper component to trigger GTM on route changes
+const GTMTracker = () => {
+  usePageViewGTM();
+  return null;
+};
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,6 +32,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <GTMTracker />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/fb" element={<IndexFb />} />

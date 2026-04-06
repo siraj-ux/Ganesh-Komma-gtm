@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { MousePointer, Monitor, Users, ArrowRight } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+import SubscribeButton from "@/components/SubscribeButton";
 
 const steps = [
   {
@@ -29,11 +29,7 @@ const steps = [
   },
 ];
 
-function scrollToForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
+
 
 const HowItWorksSection = () => {
   return (
@@ -121,14 +117,18 @@ const HowItWorksSection = () => {
           transition={{ duration: 0.4, delay: 0.2 }}
           className="text-center mt-8"
         >
-          <button
-            onClick={scrollToForm}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+          <SubscribeButton
+            onClick={scrollToWebinarForm}
+            ctaLocation="how_it_works_section"
+            href="#webinar-lead-form"
+            className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
             style={{ backgroundColor: "#FA2D1A" }}
-          >
-            Register Now & Get Access
-            <ArrowRight className="w-5 h-5" />
-          </button>
+            label={
+              <span className="flex items-center gap-2">
+                Register Now & Get Access <ArrowRight className="w-5 h-5" />
+              </span>
+            }
+          />
         </motion.div>
       </div>
     </section>

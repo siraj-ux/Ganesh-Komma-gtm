@@ -4,35 +4,32 @@ import {
   BadgeIndianRupee,
   CheckCircle2,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
+
+// Hooks & Utils
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { trackAddToCart } from "@/utils/gtm";
+import { GA_PRODUCT_OTO } from "@/utils/product-info";
+import { toast } from "sonner";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PABBLY_OTO_WEBHOOK_URL =
   "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjcwNTZjMDYzNzA0MzE1MjY4NTUzNTUxMzUi_pc";
 
-const PAYMENT_LINK_99 =
-  "https://pages.razorpay.com/pl_Ry77FbJBRdJVDu/view";
-
-const THANKYOU_URL = "/ty";
+// --- UPDATED URLS ---
+const NORMAL_THANKYOU_URL = "/ty";      // For "No" choice
+const OTO_THANKYOU_URL = "/ototy";     // For Successful OTO Purchase
 const PAGE_NAME = "A1_Eng_ADX_OTO_GA";
-// 🔥 This matches your Razorpay dropdown exactly to ensure auto-selection
-const PRODUCT_IDENTIFIER = "A1_AI Stock and IPO Prompt Codex_GA"; 
+const PRODUCT_IDENTIFIER = "A1_AI Stock and IPO Prompt Codex_GA";
 
 /* ---------------- helpers ---------------- */
 
 function getUtmsFromUrl() {
   if (typeof window === "undefined") return {};
   const p = new URLSearchParams(window.location.search);
-  const keys = [
-    "utm_source",
-    "utm_medium",
-    "utm_campaign",
-    "utm_term",
-    "utm_content",
-    "fbclid",
-    "gclid",
-  ];
+  const keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"];
   const utms: Record<string, string> = {};
   keys.forEach((k) => (utms[k] = p.get(k) || ""));
   return utms;
@@ -40,9 +37,7 @@ function getUtmsFromUrl() {
 
 function getLeadFromUrlOrStorage() {
   if (typeof window === "undefined") return { name: "", email: "", phone: "", city: "", profession: "", objective: "" };
-  
   const p = new URLSearchParams(window.location.search);
-
   const leadFromUrl = {
     name: p.get("name") || p.get("first_name") || "",
     email: p.get("email") || "",
@@ -51,7 +46,6 @@ function getLeadFromUrlOrStorage() {
     profession: p.get("profession") || "",
     objective: p.get("objective") || "",
   };
-
   try {
     const stored = localStorage.getItem("lead_data");
     if (stored) {
@@ -65,52 +59,29 @@ function getLeadFromUrlOrStorage() {
         objective: leadFromUrl.objective || j?.objective || "",
       };
     }
-  } catch {}
-
+  } catch { }
   return leadFromUrl;
 }
 
 function sendToPabblyBestEffort(payload: Record<string, any>) {
   try {
     const body = new URLSearchParams();
-    Object.entries(payload).forEach(([k, v]) =>
-      body.append(k, v == null ? "" : String(v))
-    );
-
-    try {
-      const blob = new Blob([body.toString()], {
-        type: "application/x-www-form-urlencoded;charset=UTF-8",
-      });
-      if (navigator.sendBeacon?.(PABBLY_OTO_WEBHOOK_URL, blob)) return;
-    } catch {}
-
-    fetch(PABBLY_OTO_WEBHOOK_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-      },
-      body,
-      keepalive: true,
-    }).catch(() => {});
-  } catch {}
+    Object.entries(payload).forEach(([k, v]) => body.append(k, v == null ? "" : String(v)));
+    const blob = new Blob([body.toString()], { type: "application/x-www-form-urlencoded;charset=UTF-8" });
+    if (navigator.sendBeacon?.(PABBLY_OTO_WEBHOOK_URL, blob)) return;
+    fetch(PABBLY_OTO_WEBHOOK_URL, { method: "POST", mode: "no-cors", body, keepalive: true }).catch(() => { });
+  } catch { }
 }
 
 /* ---------------- PAGE ---------------- */
 
 const OtoPage = () => {
-  const [lead, setLead] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    city: "",
-    profession: "",
-    objective: "",
-  });
-
+  const [lead, setLead] = useState({ name: "", email: "", phone: "", city: "", profession: "", objective: "" });
   const [choice, setChoice] = useState<"yes" | "no" | "">("");
   const [submittedOnce, setSubmittedOnce] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  const { initiatePayment, loading: razorpayLoading } = useRazorpay();
   const utms = useMemo(() => getUtmsFromUrl(), []);
 
   useEffect(() => {
@@ -120,33 +91,23 @@ const OtoPage = () => {
   const leadErrors = useMemo(() => {
     const name = lead.name.trim().length < 2;
     const email = !EMAIL_RE.test(lead.email.trim());
-    const phone =
-      lead.phone.replace(/\D/g, "").length < 10 ||
-      lead.phone.replace(/\D/g, "").length > 13;
+    const phone = lead.phone.replace(/\D/g, "").length < 10 || lead.phone.replace(/\D/g, "").length > 13;
     const city = lead.city.trim().length < 2;
     return { name, email, phone, city };
   }, [lead]);
 
-  const leadIsValid =
-    !leadErrors.name &&
-    !leadErrors.email &&
-    !leadErrors.phone &&
-    !leadErrors.city;
-
+  const leadIsValid = !leadErrors.name && !leadErrors.email && !leadErrors.phone && !leadErrors.city;
   const choiceIsValid = choice === "yes" || choice === "no";
 
   async function handleContinue() {
     setSubmittedOnce(true);
-    
     if (!choiceIsValid) return;
-
     if (!leadIsValid) {
-        console.error("Lead data missing from URL or LocalStorage");
-        return;
+      toast.error("Lead details missing.");
+      return;
     }
 
-    localStorage.setItem("lead_data", JSON.stringify(lead));
-    localStorage.setItem("lead_utms", JSON.stringify(utms));
+    setIsProcessing(true);
 
     const params = new URLSearchParams({
       first_name: lead.name,
@@ -157,42 +118,65 @@ const OtoPage = () => {
       objective: lead.objective,
       page_name: PAGE_NAME,
       oto: choice,
-      oto_product: "AI Stock & IPO Prompt Codex",
-      oto_price: "99",
-      product: PRODUCT_IDENTIFIER, // <--- ADDED PRODUCT PARAMETER
       ...utms,
     }).toString();
 
+    // --- PAID PATH (YES) ---
     if (choice === "yes") {
+      trackAddToCart(GA_PRODUCT_OTO); // Track GTM
+
       sendToPabblyBestEffort({
         ...lead,
         ...utms,
         page_name: PAGE_NAME,
-        weburl: window.location.href,
         oto: "yes",
-        oto_product: "AI Stock & IPO Prompt Codex",
+        oto_product: PRODUCT_IDENTIFIER,
         oto_price: "99",
-        product: PRODUCT_IDENTIFIER, // <--- ADDED PRODUCT TO PABBLY
       });
 
-      await new Promise((r) => setTimeout(r, 120));
-      window.location.href = `${PAYMENT_LINK_99}?${params}`;
+      try {
+        const result = await initiatePayment({
+          amount: 99,
+          productName: PRODUCT_IDENTIFIER,
+          description: "AI Stock & IPO Prompt Codex",
+          prefill: {
+            name: lead.name,
+            email: lead.email,
+            contact: lead.phone,
+          },
+          notes: { page_name: PAGE_NAME, ...utms }
+        });
+
+        if (result.status === "success") {
+          // REDIRECT TO /ototy ON SUCCESS
+          window.location.href = `${OTO_THANKYOU_URL}?${params}&payment_id=${result.paymentId}`;
+        } else {
+          if (result.error !== "Payment cancelled by user") {
+            toast.error(result.error || "Payment failed");
+          }
+          setIsProcessing(false);
+        }
+      } catch (err) {
+        console.error("Payment Error:", err);
+        setIsProcessing(false);
+      }
       return;
     }
 
-    window.location.href = `${THANKYOU_URL}?${params}`;
+    // --- SKIP PATH (NO) ---
+    window.location.href = `${NORMAL_THANKYOU_URL}?${params}`;
   }
 
   const buttonText = choice === "no" ? "Confirm To Join WhatsApp Group" : "Confirm & Continue";
 
   return (
-     <section className="relative overflow-hidden bg-[#FFF3E1] min-h-screen">
+    <section className="relative overflow-hidden bg-[#FFF3E1] min-h-screen">
       <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#2E4C8C]/10 blur-3xl" />
       <div className="pointer-events-none absolute top-24 right-0 h-72 w-72 rounded-full bg-[#FA2D1A]/10 blur-3xl" />
 
       <div className="container-main relative z-10 py-10 md:py-12">
         <div className="flex flex-col lg:grid lg:grid-cols-[1.2fr_.8fr] lg:gap-8 lg:items-start">
-          
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
@@ -202,7 +186,7 @@ const OtoPage = () => {
             className="order-1 lg:col-start-1 lg:row-start-1 space-y-5"
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-[#2E4C8C]/15 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2E4C8C]">
-             🚨 WAIT — Before You Go
+              🚨 WAIT — Before You Go
             </div>
 
             <h1 className="text-3xl md:text-4xl font-extrabold text-[#2E4C8C] leading-tight">
@@ -229,27 +213,27 @@ const OtoPage = () => {
 
           {/* Image */}
           <motion.div
-             initial={{ opacity: 0, y: 14 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ duration: 0.45, delay: 0.08 }}
-             className="order-2 mt-6 lg:mt-8 lg:col-start-1 lg:row-start-2"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: 0.08 }}
+            className="order-2 mt-6 lg:mt-8 lg:col-start-1 lg:row-start-2"
           >
-             <div className="rounded-2xl overflow-hidden border border-[#2E4C8C]/20 bg-[#050816]">
-                <div className="px-5 pt-5 pb-3 md:px-6 md:pt-6 md:pb-4">
-                  <h2 className="text-lg md:text-xl font-extrabold text-white">
-                    AI-Powered Stock Market Mastery Series
-                  </h2>
-                </div>
-                <div className="w-full">
-                  <img
-                    src="/image-books.png"
-                    alt="AI-Powered Stock Market Mastery Series"
-                    className="w-full h-auto max-h-[360px] md:max-h-[420px] object-contain"
-                    loading="lazy"
-                  />
-                </div>
+            <div className="rounded-2xl overflow-hidden border border-[#2E4C8C]/20 bg-[#050816]">
+              <div className="px-5 pt-5 pb-3 md:px-6 md:pt-6 md:pb-4">
+                <h2 className="text-lg md:text-xl font-extrabold text-white">
+                  AI-Powered Stock Market Mastery Series
+                </h2>
               </div>
+              <div className="w-full">
+                <img
+                  src="/image-books.png"
+                  alt="AI-Powered Stock Market Mastery Series"
+                  className="w-full h-auto max-h-[360px] md:max-h-[420px] object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
           </motion.div>
 
           {/* Choice Box */}
@@ -290,12 +274,18 @@ const OtoPage = () => {
               <button
                 type="button"
                 onClick={handleContinue}
-                disabled={!choiceIsValid}
+                disabled={!choiceIsValid || isProcessing || razorpayLoading}
                 className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99] disabled:opacity-50"
                 style={{ backgroundColor: "#FA2D1A" }}
               >
-                {buttonText}
-                <ArrowRight className="w-5 h-5" />
+                {(isProcessing || razorpayLoading) ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    {buttonText}
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
@@ -328,11 +318,11 @@ const OtoPage = () => {
                     {item}
                   </p>
                 ))}
-                
+
                 <div className="pt-2">
-                    <p className="text-sm font-extrabold text-[#2E4C8C]">
-                        No guesswork. No emotional trades. Just structured clarity.
-                    </p>
+                  <p className="text-sm font-extrabold text-[#2E4C8C]">
+                    No guesswork. No emotional trades. Just structured clarity.
+                  </p>
                 </div>
               </div>
 
@@ -347,10 +337,10 @@ const OtoPage = () => {
 
               <div className="space-y-1 border-t border-[#2E4C8C]/5 pt-4">
                 <div className="text-xs font-bold text-[#FA2D1A]">
-                    ⚠ True One-Time Offer
+                  ⚠ True One-Time Offer
                 </div>
                 <div className="text-xs text-[#3B3F4A]">
-                    ⚠ Disappears Once You Leave This Page
+                  ⚠ Disappears Once You Leave This Page
                 </div>
               </div>
             </div>

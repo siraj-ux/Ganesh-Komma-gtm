@@ -1,13 +1,7 @@
 import { motion } from "framer-motion";
 import { Shield, ArrowRight, Sparkles } from "lucide-react";
-
-const FORM_ID = "webinar-lead-form";
-
-const scrollToForm = () => {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-};
+import { scrollToWebinarForm } from "@/components/webinar/HeroSection";
+import SubscribeButton from "@/components/SubscribeButton";
 
 const GuaranteeSection = () => {
   return (
@@ -50,14 +44,18 @@ const GuaranteeSection = () => {
             </div>
 
             {/* CTA */}
-            <button
-              onClick={scrollToForm}
-              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+            <SubscribeButton
+              onClick={scrollToWebinarForm}
+              ctaLocation="guarantee_section"
+              href="#webinar-lead-form"
+              className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
               style={{ backgroundColor: "#FA2D1A" }}
-            >
-              Register Now & Get Access
-              <ArrowRight className="w-5 h-5" />
-            </button>
+              label={
+                <span className="flex items-center gap-2">
+                  Register Now & Get Access <ArrowRight className="w-5 h-5" />
+                </span>
+              }
+            />
 
             {/* Bonus reminder */}
             <p className="mt-4 text-xs md:text-sm text-[#3B3F4A]">

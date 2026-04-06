@@ -14,9 +14,14 @@ import {
   Mail,
   Phone,
   MapPin,
+  Loader2,
 } from "lucide-react";
 
-const FORM_ID = "webinar-lead-form";
+// ✅ Added missing imports
+import AddToCartButton from '@/components/AddToCartButton';
+import SubscribeButton from "@/components/SubscribeButton";
+import { GA_PRODUCT } from "@/utils/product-info";
+
 const YOUTUBE_ID = "eNUfnbzLr7M";
 
 // ✅ PRESERVED SETTINGS
@@ -42,9 +47,14 @@ const stats = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function scrollToWebinarForm() {
-  const el = document.getElementById(FORM_ID);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const wrappers = document.querySelectorAll(".webinar-form-wrapper");
+  for (let i = 0; i < wrappers.length; i++) {
+    const w = wrappers[i];
+    if (w.getBoundingClientRect().width > 0) {
+      w.scrollIntoView({ behavior: "smooth", block: "start" });
+      break;
+    }
+  }
 }
 
 function ytThumb(id: string) {
@@ -67,9 +77,10 @@ type WebinarMeta = {
   language?: string;
 };
 
-/* ---------------- HERO FORM COMPONENT (ALL 6 FIELDS) ---------------- */
+/* ---------------- HERO FORM COMPONENT ---------------- */
 
 const HeroForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", city: "", profession: "", objective: "",
   });
@@ -107,8 +118,12 @@ const HeroForm = () => {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setTouched({ name: true, email: true, phone: true, city: true, profession: true, objective: true });
     if (!isValid) return;
+
+    setIsSubmitting(true);
 
     const track = getTrackingFromUrl();
     const weburl = window.location.href;
@@ -123,21 +138,21 @@ const HeroForm = () => {
     }
 
     const payload = { ...form, ...track, page_name: PAGE_NAME, weburl };
-    
+
     try {
       await fetch(PABBLY_WEBHOOK_URL, {
         method: "POST", mode: "no-cors",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(payload),
       });
-    } catch {}
+    } catch { }
 
     const params = new URLSearchParams(payload).toString();
     window.location.href = `/oto?${params}`;
   }
 
   return (
-    <div id={FORM_ID} className="rounded-2xl border border-[#2E4C8C]/15 bg-white/60 shadow-xl overflow-hidden relative z-10">
+    <div className="webinar-form-wrapper rounded-2xl border border-[#2E4C8C]/15 bg-white/60 shadow-xl overflow-hidden relative z-10">
       <div className="p-5">
         <div className="mb-4 text-center">
           <span className="inline-flex items-center rounded-full border border-[#2E4C8C]/15 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2E4C8C]">Quick Registration</span>
@@ -150,7 +165,7 @@ const HeroForm = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" id="webinar-lead-form">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[#2E4C8C]">Full Name</label>
             <div className={`flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2.5 shadow-sm transition ${showError("name") ? "border-[#FA2D1A]/60" : "border-[#2E4C8C]/15"}`}>
@@ -209,9 +224,25 @@ const HeroForm = () => {
             </div>
           </div>
 
-          <button type="submit" className="w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md active:scale-[0.99]" style={{ backgroundColor: "#FA2D1A" }}>
-            Register Now & Get Access <ArrowRight className="w-5 h-5" />
-          </button>
+          {/* ✅ FORM BUTTON UPDATED */}
+          <AddToCartButton
+            type="submit"
+            product={GA_PRODUCT}
+            disabled={isSubmitting}
+            className="!bg-[#FA2D1A] w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-md hover:shadow-lg transition active:scale-[0.99]"
+            style={{ backgroundColor: "#FA2D1A" }}
+            label={
+              isSubmitting ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="animate-spin mr-2 h-5 w-5" /> Processing...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  Register Now & Get Access <ArrowRight className="w-5 h-5" />
+                </span>
+              )
+            }
+          />
 
           <p className="text-[11px] text-center text-[#3B3F4A]">
             Receive bonuses by joining the WhatsApp group. <span className="font-bold text-[#FA2D1A]">Only 4 Seats Left!</span>
@@ -258,7 +289,7 @@ const HeroSection = () => {
         <div className="pointer-events-none absolute top-24 right-0 h-72 w-72 rounded-full bg-[#FA2D1A]/10 blur-3xl" />
 
         <div className="container-main relative z-10 py-8 md:py-12 lg:py-16">
-          
+
           {/* MOBILE VIEW (lg:hidden) */}
           <div className="flex flex-col gap-6 lg:hidden">
             <div className="text-center space-y-4">
@@ -276,10 +307,20 @@ const HeroSection = () => {
               </span>
             </div>
 
+            {/* ✅ MOBILE BUTTON UPDATED */}
             <div className="flex justify-center">
-              <button onClick={scrollToWebinarForm} className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]" style={{ backgroundColor: "#FA2D1A" }}>
-                Register Now & Get Access <ArrowRight className="w-5 h-5" />
-              </button>
+              <SubscribeButton
+                onClick={scrollToWebinarForm}
+                ctaLocation="hero_mobile"
+                href="#webinar-lead-form"
+                className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md active:scale-[0.99]"
+                style={{ backgroundColor: "#FA2D1A" }}
+                label={
+                  <span className="flex items-center gap-2">
+                    Register Now & Get Access <ArrowRight className="w-5 h-5" />
+                  </span>
+                }
+              />
             </div>
 
             {/* VIDEO PLAYER (MOBILE) */}
@@ -296,13 +337,13 @@ const HeroSection = () => {
                 </button>
               ) : (
                 <div className="aspect-video rounded-2xl overflow-hidden shadow-xl border border-[#2E4C8C]/15 bg-black">
-                  <iframe src={`https://www.youtube.com/embed/${YOUTUBE_ID}?autoplay=1&rel=0`} title="Webinar video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" className="w-full h-full" />
+                  <iframe src={`https://www.youtube.com/embed/${YOUTUBE_ID}?autoplay=1`} title="Webinar video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" className="w-full h-full" />
                 </div>
               )}
             </div>
 
             <HeroForm />
-            
+
             <ul className="space-y-2">
               {["Build consistent returns", "Minimize risk with hedging", "Confidently grow investments"].map((txt, i) => (
                 <li key={i} className="flex items-start gap-2">
@@ -321,8 +362,8 @@ const HeroSection = () => {
               <p className="text-lg text-[#1A1F2B]">Master simple strategies to build <span className="font-bold">consistent returns</span> with smarter investment decisions.</p>
 
               <div className="flex gap-3 text-sm font-bold text-[#1A1F2B]">
-                 <div className="bg-white/70 px-4 py-2 rounded-full border border-[#2E4C8C]/15 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-[#2E4C8C]" /> {webinarMeta.date} ({webinarMeta.day})</div>
-                 <div className="bg-white/70 px-4 py-2 rounded-full border border-[#2E4C8C]/15 flex items-center gap-2"><Clock className="w-4 h-4 text-[#2E4C8C]" /> {webinarMeta.time}</div>
+                <div className="bg-white/70 px-4 py-2 rounded-full border border-[#2E4C8C]/15 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-[#2E4C8C]" /> {webinarMeta.date} ({webinarMeta.day})</div>
+                <div className="bg-white/70 px-4 py-2 rounded-full border border-[#2E4C8C]/15 flex items-center gap-2"><Clock className="w-4 h-4 text-[#2E4C8C]" /> {webinarMeta.time}</div>
               </div>
 
               <ul className="space-y-3">
@@ -333,9 +374,19 @@ const HeroSection = () => {
                 ))}
               </ul>
 
-              <button onClick={scrollToWebinarForm} className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md transition hover:shadow-lg active:scale-[0.99]" style={{ backgroundColor: "#FA2D1A" }}>
-                Register Now & Get Access <ArrowRight className="w-5 h-5" />
-              </button>
+              {/* ✅ DESKTOP BUTTON UPDATED */}
+              <SubscribeButton
+                onClick={scrollToWebinarForm}
+                ctaLocation="hero_desktop"
+                href="#webinar-lead-form"
+                className="!bg-[#FA2D1A] inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md transition hover:shadow-lg active:scale-[0.99]"
+                style={{ backgroundColor: "#FA2D1A" }}
+                label={
+                  <span className="flex items-center gap-2">
+                    Register Now & Get Access <ArrowRight className="w-5 h-5" />
+                  </span>
+                }
+              />
 
               <p className="text-sm font-medium text-[#3B3F4A]">
                 Receive bonuses by joining the WhatsApp group. <span className="font-bold text-[#FA2D1A]">Only 4 Seats Left!</span>
@@ -352,7 +403,7 @@ const HeroSection = () => {
             </div>
 
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="relative space-y-6">
-               {!play ? (
+              {!play ? (
                 <button type="button" onClick={() => setPlay(true)} className="w-full aspect-video rounded-2xl overflow-hidden border-4 border-white shadow-2xl relative group">
                   <img src={ytThumb(YOUTUBE_ID)} alt="Thumb" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 flex items-center justify-center transition">

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, MessageCircle, ArrowRight } from "lucide-react";
-import { useFacebookPixel } from "@/hooks/usePIxelWatch";
+// --- GTM IMPORTS ---
+import { trackPurchase } from "@/utils/gtm";
+import { DISCOUNTED_PRICE, ORDER, PRODUCT } from "@/utils/product-info";
+// -----------------------
 
 const PROGRAM_CODE = "A1_Eng_ADX_OTO_GA";
 const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?programCode=${encodeURIComponent(
@@ -15,16 +18,40 @@ declare global {
 }
 
 const ThankuFreeFb = () => {
-  useFacebookPixel();
-
   const [waLink, setWaLink] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   // prevent duplicate firing
   const purchaseFired = useRef(false);
 
-  /* ---------------- FACEBOOK TRACKING ---------------- */
+  /* ✅ GTM PURCHASE TRACKING (With Refresh Protection) */
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // 1. Get payment ID from URL to prevent duplicate hits
+    const params = new URLSearchParams(window.location.search);
+    const paymentId = params.get("payment_id") || params.get("razorpay_payment_id") || `txn_${Date.now()}`;
+
+    const alreadyTrackedGTM = localStorage.getItem(`gtm_tracked_${paymentId}`);
+    if (alreadyTrackedGTM) return;
+
+    // 2. Fire GTM Purchase Event
+    trackPurchase({
+      ...ORDER,
+      value: DISCOUNTED_PRICE,
+      transaction_id: paymentId,
+      items: [
+        { ...PRODUCT }
+      ],
+    });
+
+    localStorage.setItem(`gtm_tracked_${paymentId}`, "true");
+    console.log("GTM Purchase fired ✅");
+  }, []);
+
+  /* ---------------- FACEBOOK TRACKING (COMMENTED OUT) ---------------- */
+  useEffect(() => {
+    /*
     if (typeof window === "undefined") return;
 
     const fireFacebookEvents = () => {
@@ -53,6 +80,7 @@ const ThankuFreeFb = () => {
     const timer = setTimeout(fireFacebookEvents, 1200);
 
     return () => clearTimeout(timer);
+    */
   }, []);
 
   /* ---------------- FETCH WHATSAPP LINK ---------------- */
@@ -130,10 +158,8 @@ const ThankuFreeFb = () => {
             href={waLink || "#"}
             target="_blank"
             rel="noreferrer"
-            aria-disabled={!waLink}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md transition active:scale-[0.99] ${
-              !waLink ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
-            }`}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-md transition active:scale-[0.99] ${!waLink ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
+              }`}
             style={{ backgroundColor: "#00c614" }}
           >
             {loading ? "Loading WhatsApp Link..." : "Join WhatsApp Group"}
