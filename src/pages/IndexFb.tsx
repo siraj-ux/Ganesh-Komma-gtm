@@ -8,9 +8,9 @@ import MentorSection from "@/components/webinar/MentorSection";
 import GuaranteeSection from "@/components/webinar/GuaranteeSection";
 import FAQSection from "@/components/webinar/FAQSection";
 import StickyFooter from "@/components/webinar/StickyFooter";
-import { useFacebookPixel } from "@/hooks/usePIxelWatch";
+// import { useFacebookPixel } from "@/hooks/usePIxelWatch";
 const IndexFb = () => {
-    useFacebookPixel();
+    // useFacebookPixel();
   return (
     <main className="min-h-screen overflow-x-hidden bg-background">
       <HeroSectionFb />

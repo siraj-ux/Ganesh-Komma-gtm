@@ -29,6 +29,9 @@ const PABBLY_WEBHOOK_URL =
   "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjcwNTZjMDYzNzA0MzE1MjY4NTUzNTUxMzIi_pc";
 const PAGE_NAME = "A1_Eng_ADX_OTO_GA";
 
+
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzzZC_LXxQ9AOVnr6x1jKpOlwsN-iRKS5FSN6K1yB0DppkZYT6GXxmKuDlY2BqH-W4J/exec";
+
 const WEBINAR_SYNC_URL = `https://webinarsync.gdworkflows.in/sync-webinar?programCode=${encodeURIComponent(
   PAGE_NAME
 )}`;
@@ -137,18 +140,56 @@ const HeroForm = () => {
       });
     }
 
-    const payload = { ...form, ...track, page_name: PAGE_NAME, weburl };
+    // 1. PABBLY PAYLOAD (Unchanged logic)
+    const pabblyPayload = { 
+        ...form, 
+        ...track, 
+        utm_source: track.utm_source || "ga", 
+        page_name: PAGE_NAME, 
+        weburl 
+    };
 
+    // 2. GOOGLE SHEET PAYLOAD (Matches your Column Headers)
+    const sheetPayload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        city: form.city,
+        profession: form.profession,
+        objective: form.objective,
+        utm_source: track.utm_source || "ga",
+        page_url: weburl,           // Column I
+        workshop_name: PAGE_NAME,   // Column J
+        utm_medium: track.utm_medium || "",
+        utm_campaign: track.utm_campaign || "",
+        utm_term: track.utm_term || "",
+        utm_content: track.utm_content || "",
+        gclid: track.gclid || "",
+        fbclid: track.fbclid || ""
+    };
+
+    // Send to Pabbly
     try {
       await fetch(PABBLY_WEBHOOK_URL, {
         method: "POST", mode: "no-cors",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(payload),
+        body: new URLSearchParams(pabblyPayload),
       });
     } catch { }
 
-    const params = new URLSearchParams(payload).toString();
-    window.location.href = `/oto?${params}`;
+    // Send to Google Sheet
+    try {
+      await fetch(GOOGLE_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(sheetPayload),
+      });
+    } catch (err) {
+      console.error("Google Sheet Error:", err);
+    }
+
+    const params = new URLSearchParams(pabblyPayload).toString();
+    window.location.href = `/ty?${params}`;
   }
 
   return (
@@ -158,10 +199,10 @@ const HeroForm = () => {
           <span className="inline-flex items-center rounded-full border border-[#2E4C8C]/15 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2E4C8C]">Quick Registration</span>
           <h3 className="mt-2 text-lg md:text-xl font-extrabold text-[#2E4C8C]">Get Instant Access</h3>
           <div className="mb-3 flex justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#FA2D1A]/10 border border-[#FA2D1A]/30 px-4 py-1.5">
+            {/* <div className="inline-flex items-center gap-2 rounded-full bg-[#FA2D1A]/10 border border-[#FA2D1A]/30 px-4 py-1.5">
               <span className="text-xs font-semibold text-[#FA2D1A]">Offer Expires In</span>
               <span className="font-mono text-sm font-bold text-[#FA2D1A]">{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}</span>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -290,7 +331,7 @@ const HeroSection = () => {
 
         <div className="container-main relative z-10 py-8 md:py-12 lg:py-16">
 
-          {/* MOBILE VIEW (lg:hidden) */}
+          {/* MOBILE VIEW */}
           <div className="flex flex-col gap-6 lg:hidden">
             <div className="text-center space-y-4">
               <span className="inline-flex items-center rounded-full border border-[#2E4C8C]/20 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2E4C8C]">From Confusion to Confidence</span>
@@ -307,7 +348,6 @@ const HeroSection = () => {
               </span>
             </div>
 
-            {/* ✅ MOBILE BUTTON UPDATED */}
             <div className="flex justify-center">
               <SubscribeButton
                 onClick={scrollToWebinarForm}
@@ -323,7 +363,6 @@ const HeroSection = () => {
               />
             </div>
 
-            {/* VIDEO PLAYER (MOBILE) */}
             <div className="relative">
               {!play ? (
                 <button type="button" onClick={() => setPlay(true)} className="w-full aspect-video rounded-2xl overflow-hidden border border-[#2E4C8C]/15 shadow-xl bg-white/60 relative group">
@@ -354,7 +393,7 @@ const HeroSection = () => {
             </ul>
           </div>
 
-          {/* DESKTOP VIEW (hidden lg:grid) */}
+          {/* DESKTOP VIEW */}
           <div className="hidden lg:grid grid-cols-2 gap-10 items-start">
             <div className="space-y-6">
               <span className="inline-flex items-center rounded-full border border-[#2E4C8C]/20 bg-white/70 px-4 py-1 text-xs font-bold text-[#2E4C8C]">MASTER THE STOCK MARKET</span>
@@ -374,7 +413,6 @@ const HeroSection = () => {
                 ))}
               </ul>
 
-              {/* ✅ DESKTOP BUTTON UPDATED */}
               <SubscribeButton
                 onClick={scrollToWebinarForm}
                 ctaLocation="hero_desktop"

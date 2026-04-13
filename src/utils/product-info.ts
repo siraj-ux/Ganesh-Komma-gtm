@@ -22,15 +22,15 @@ export const OG_PRICE = 0;
 export const DISCOUNTED_PRICE = 0;
 export const OTO_OG_PRICE = 99;
 export const OTO_DISCOUNTED_PRICE = 99;
-export const WEBINAR_NAME = "A1_AI Stock & IPO Prompt Codex";
+export const WEBINAR_NAME = "FFC English";
 export const CURRENCY = "INR";
 export const CURRENCY_SYMBOL = "₹";
-export const RAZORPAY_PRODUCT_NAME = "A1_AI Stock & IPO Prompt Codex"
+export const RAZORPAY_PRODUCT_NAME = "FFC English"
 export const RAZORPAY_DESCRIPTION = `${RAZORPAY_PRODUCT_NAME} from ${WEBINAR_NAME}`
 
 
 export const PRODUCT: Product = {
-    item_id: 'A1_AI Stock & IPO Prompt Codex',
+    item_id: 'FFC English FB',
     item_name: WEBINAR_NAME,
     item_category: 'Online Workshop',
     price: DISCOUNTED_PRICE,
@@ -40,7 +40,7 @@ export const PRODUCT: Product = {
 }
 
 export const PRODUCT_OTO: Product = {
-    item_id: 'A1_AI Stock & IPO Prompt Codex OTO',
+    item_id: 'FFC English OTO FB',
     item_name: `${WEBINAR_NAME} OTO`,
     item_category: 'Online Workshop',
     price: OTO_DISCOUNTED_PRICE,
@@ -50,7 +50,7 @@ export const PRODUCT_OTO: Product = {
 }
 
 export const GA_PRODUCT: Product = {
-    item_id: 'A1_AI Stock & IPO Prompt Codex GA',
+    item_id: 'FFC English GA',
     item_name: `${WEBINAR_NAME} GA`,
     item_category: 'Online Workshop',
     price: DISCOUNTED_PRICE,
@@ -60,7 +60,7 @@ export const GA_PRODUCT: Product = {
 }
 
 export const GA_PRODUCT_OTO: Product = {
-    item_id: 'A1_AI Stock & IPO Prompt Codex OTO GA',
+    item_id: 'FFC English GA',
     item_name: `${WEBINAR_NAME} OTO GA`,
     item_category: 'Online Workshop',
     price: OTO_DISCOUNTED_PRICE,
